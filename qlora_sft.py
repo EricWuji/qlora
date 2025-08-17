@@ -43,8 +43,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto",
     trust_remote_code=True,
-    use_cache=False,
-    use_flash_attention_2=True
+    use_cache=False
 )
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
