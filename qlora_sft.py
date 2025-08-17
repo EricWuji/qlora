@@ -44,6 +44,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     trust_remote_code=True,
     use_cache=False,
+    use_flash_attention_2=True
 )
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
@@ -90,8 +91,8 @@ eval_dataset = dataset["train"].select(range(1000)).map(format_dataset)
 training_args = TrainingArguments(
     output_dir=output_dir,
     num_train_epochs=1,
-    per_device_train_batch_size=8,  # Reduce batch size
-    gradient_accumulation_steps=4,  # Increase to maintain effective batch size
+    per_device_train_batch_size=1,  # Reduce batch size
+    gradient_accumulation_steps=16,  # Increase to maintain effective batch size
     warmup_steps=100,
     max_steps=1000,
     learning_rate=2e-4,
@@ -116,9 +117,8 @@ formatted_eval_dataset = dataset["train"].select(range(1000)).map(format_dataset
 # Initialize trainer
 trainer = SFTTrainer(
     model=model,
-    train_dataset=dataset["train"],
-    eval_dataset=dataset["train"].select(range(1000)),
-    formatting_func=format_instruction,
+    train_dataset=formatted_train_dataset,
+    eval_dataset=formatted_eval_dataset,
     args=training_args
 )
 

@@ -5,3 +5,4 @@ trl
 datasets
 modelscope
 bitsandbytes
+wandb
