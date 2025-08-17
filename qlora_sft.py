@@ -90,8 +90,8 @@ eval_dataset = dataset["train"].select(range(1000)).map(format_dataset)
 training_args = TrainingArguments(
     output_dir=output_dir,
     num_train_epochs=1,
-    per_device_train_batch_size=4,  # Reduce batch size
-    gradient_accumulation_steps=8,  # Increase to maintain effective batch size
+    per_device_train_batch_size=8,  # Reduce batch size
+    gradient_accumulation_steps=4,  # Increase to maintain effective batch size
     warmup_steps=100,
     max_steps=1000,
     learning_rate=2e-4,
@@ -109,6 +109,9 @@ training_args = TrainingArguments(
     gradient_checkpointing=True,
     report_to="none",  # Disable wandb/tensorboard
 )
+
+formatted_train_dataset = dataset["train"].map(format_dataset, remove_columns=dataset["train"].column_names, num_proc=4)
+formatted_eval_dataset = dataset["train"].select(range(1000)).map(format_dataset, num_proc=4, remove_columns=dataset["train"].column_names)
 
 # Initialize trainer
 trainer = SFTTrainer(
