@@ -4,3 +4,4 @@ peft
 trl
 datasets
 modelscope
+bitsandbytes
