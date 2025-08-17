@@ -10,14 +10,19 @@ from transformers import (
     pipeline
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset
 import os
+
+# Get the absolute path of the script's directory
+script_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Model and dataset configuration
 model_name = "./models/TinyLlama-1.1B-Chat-v1.0"
 dataset_name = "yahma/alpaca-cleaned"
 output_dir = "./output"
+dataset_cache_dir = "./datasets/alpaca-cleaned"
+logs_dir = "./logs"
 
 # QLoRA configuration
 bnb_config = BitsAndBytesConfig(
@@ -43,10 +48,11 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto",
     trust_remote_code=True,
-    use_cache=False
+    use_cache=False,
+    local_files_only=True
 )
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, local_files_only=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
@@ -59,7 +65,12 @@ model = get_peft_model(model, lora_config)
 print("PEFT configuration applied successfully")
 
 # Load and preprocess dataset
-dataset = load_dataset(dataset_name, cache_dir="./datasets/alpaca-cleaned")
+dataset = load_dataset(dataset_name, cache_dir=dataset_cache_dir)
+
+# Shuffle the dataset and split into train/eval
+shuffled_dataset = dataset["train"].shuffle(seed=42)
+train_dataset = shuffled_dataset.select(range(1000))  # First 1000 samples for training
+eval_dataset = shuffled_dataset.select(range(1000, 1100))  # Next 100 samples for evaluation
 
 def format_instruction(sample):
     if sample["input"]:
@@ -83,14 +94,14 @@ def format_dataset(sample):
     sample["text"] = format_instruction(sample)
     return sample
 
-formatted_dataset = dataset["train"].map(format_dataset)
-eval_dataset = dataset["train"].select(range(1000)).map(format_dataset)
+formatted_train_dataset = train_dataset.map(format_dataset, remove_columns=train_dataset.column_names, num_proc=4)
+formatted_eval_dataset = eval_dataset.map(format_dataset, remove_columns=eval_dataset.column_names, num_proc=4)
 
-# Training arguments
-training_args = TrainingArguments(
+# Training arguments using SFTConfig
+sft_config = SFTConfig(
     output_dir=output_dir,
     num_train_epochs=1,
-    per_device_train_batch_size=1,  # Reduce batch size
+    per_device_train_batch_size=4,  # Reduce batch size
     gradient_accumulation_steps=16,  # Increase to maintain effective batch size
     warmup_steps=100,
     max_steps=1000,
@@ -104,21 +115,22 @@ training_args = TrainingArguments(
     optim="paged_adamw_8bit",
     lr_scheduler_type="cosine",
     remove_unused_columns=False,
-    logging_dir="./logs",
+    logging_dir=logs_dir,
     logging_strategy="steps",
     gradient_checkpointing=True,
     report_to="none",  # Disable wandb/tensorboard
+    dataset_text_field="text", # Field in the dataset containing the text
+    max_length=512,
+    packing=False,
 )
-
-formatted_train_dataset = dataset["train"].map(format_dataset, remove_columns=dataset["train"].column_names, num_proc=4)
-formatted_eval_dataset = dataset["train"].select(range(1000)).map(format_dataset, num_proc=4, remove_columns=dataset["train"].column_names)
 
 # Initialize trainer
 trainer = SFTTrainer(
     model=model,
     train_dataset=formatted_train_dataset,
     eval_dataset=formatted_eval_dataset,
-    args=training_args
+    args=sft_config,
+    processing_class=tokenizer,
 )
 
 # Start training
