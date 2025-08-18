@@ -3,7 +3,7 @@ from peft import PeftModel, PeftConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_path = "./models/Qwen2.5-7B-Instruct"
-lora_path = "./out/Qwen2.5-7B-Instruct"
+lora_path = "./out/Qwen2.5-7B-Instruct2"
 output_path = "./out/Qwen2.5-7B-Instruct-merged"
 
 # Load tokenizer
