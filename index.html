@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>My LLM Chat</title></head>
+<body>
+<h2>Chat with Your Fine-tuned Model</h2>
+<textarea id="input" rows="5" cols="60" placeholder="Enter your instruction..."></textarea><br>
+<button onclick="send()">Send</button><br><br>
+<div id="output"></div>
+
+<script>
+async function send() {
+  const input = document.getElementById("input").value;
+  const res = await fetch("http://localhost:8001/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: input })
+  });
+  const data = await res.json();
+  document.getElementById("output").innerText = data.reply;
+}
+</script>
+</body>
+</html>
