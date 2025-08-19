@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/home/wuyinqi/llm/qlora/app.log'),
+        logging.FileHandler('./logs/app.log'),
         logging.StreamHandler()
     ]
 )
@@ -39,7 +39,7 @@ def load_api_keys():
         logger.info(f"Loaded {len(keys)} API keys from environment")
     
     # Method 2: From file
-    api_keys_file = os.getenv("API_KEYS_FILE", "/home/wuyinqi/llm/qlora/api_keys.txt")
+    api_keys_file = os.getenv("API_KEYS_FILE", "./api_keys.txt")
     if os.path.exists(api_keys_file):
         try:
             with open(api_keys_file, 'r') as f:
@@ -87,7 +87,7 @@ def chat_completion(
         response = requests.post(
             "http://localhost:8000/v1/completions",
             json={
-                "model": "Qwen2.5-7B-Instruct-merged",
+                "model": "./models/Qwen2.5-7B-Instruct-merged",
                 "prompt": f"### Instruction:\n{chat_request.message}\n### Response:\n",
                 "max_tokens": chat_request.max_token,
                 "temperature": chat_request.temperature,
