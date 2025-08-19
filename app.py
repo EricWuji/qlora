@@ -87,7 +87,7 @@ def chat_completion(
         response = requests.post(
             "http://localhost:8000/v1/completions",
             json={
-                "model": "./models/Qwen2.5-7B-Instruct-merged",
+                "model": "Qwen2.5-7B-Instruct-merged",  # Use just the model name, not the path
                 "prompt": f"### Instruction:\n{chat_request.message}\n### Response:\n",
                 "max_tokens": chat_request.max_token,
                 "temperature": chat_request.temperature,
