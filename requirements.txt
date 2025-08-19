@@ -7,3 +7,9 @@ modelscope
 bitsandbytes
 wandb
 locust
+fastapi
+uvicorn
+pydantic
+requests
+slowapi
+python-multipart

@@ -1,0 +1,12 @@
+# API Keys Configuration File
+# One key per line, lines starting with # are comments
+
+sk-1234567890abcdef1234567890abcdef
+sk-abcdef1234567890abcdef1234567890
+user-api-key-12345
+admin-key-67890
+
+# You can add comments to organize keys
+# Development keys:
+dev-key-001
+dev-key-002
